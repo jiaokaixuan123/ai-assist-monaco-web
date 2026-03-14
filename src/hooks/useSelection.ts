@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type * as monaco from 'monaco-editor'
 
+// 选区钩子
 export function useSelection() {
   const [selectedCode, setSelectedCode] = useState('')
 

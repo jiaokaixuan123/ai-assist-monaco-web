@@ -1,17 +1,19 @@
 import React from 'react'
 
+// 接口：头部组件(TypeScript 的 “类型校验”)
 interface HeaderProps {
-  isReady: boolean
-  loadingStatus: string
-  code: string
-  onToggleSettings: () => void
-  showSettings: boolean
-  onFormat: () => void
-  onRun: () => void
-  isRunning: boolean
+  isReady: boolean                // 就绪状态
+  loadingStatus: string           // 加载状态
+  code: string                    // 代码
+  onToggleSettings: () => void    // 切换设置
+  showSettings: boolean           // 显示设置
+  onFormat: () => void            // 格式化
+  onRun: () => void               // 允许
+  isRunning: boolean              // 运行中
 }
 
-const Header: React.FC<HeaderProps> = ({
+// 函数式组件：头部组件
+const Header: React.FC<HeaderProps> = ({  // 从传入的 Props 对象中直接提取需要的属性
   isReady,
   loadingStatus,
   showSettings,
@@ -21,17 +23,21 @@ const Header: React.FC<HeaderProps> = ({
   isRunning,
   code
 }) => {
-  return (
+  return (    //JSX：是 React 的语法糖，本质是 React.createElement 的简化写法，允许在 JavaScript 中写 HTML 结构。
+    // Flex容器（最外层 + 按钮组容器）
     <div style={{
       display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: '12px 20px',
-      background: '#2d2d2d',
-      borderBottom: '1px solid #3e3e3e'
+      justifyContent: 'space-between',    // 定义项目在主轴上的对齐方式
+      alignItems: 'center',               // 定义项目在交叉轴上的对齐方式
+      padding: '12px 20px',               // 内边距
+      background: '#2d2d2d',            // 背景色
+      borderBottom: '1px solid #3e3e3e' // 底部边框
     }}>
+      {/* <h1>	标题展示 ; margin 属性为给定元素设置所有四个（上右下左）方向的外边距属性，值为 0，即没有外边距。 */}
       <h1 style={{ margin: 0, fontSize: '20px' }}>🎓 Monaco AI 编程助手</h1>
+      {/* flex 容器, Flex 交叉轴垂直居中,让标题、按钮、状态文本在头部栏中垂直居中，保证视觉对齐 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {/* span 标签，状态提示文本，根据就绪状态显示不同的颜色 padding/margin 内边距 / 外边距*/}
         <span style={{
           fontSize: '12px',
           color: isReady ? '#4ec9b0' : '#dcdcaa',
@@ -41,6 +47,7 @@ const Header: React.FC<HeaderProps> = ({
         }}>
           {isReady ? '🐍 Python 就绪' : '⏳ ' + loadingStatus}
         </span>
+        {/* button 标签 */}
         <button
           onClick={onToggleSettings}
           title="编辑器设置"
@@ -94,4 +101,4 @@ const Header: React.FC<HeaderProps> = ({
   )
 }
 
-export default Header
+export default Header // 导出Header组件供其他文件使用

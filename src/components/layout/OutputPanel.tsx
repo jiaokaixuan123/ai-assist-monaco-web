@@ -1,5 +1,6 @@
 import React from 'react'
 
+// 输出面板
 interface OutputPanelProps {
   output: string
   onClear: () => void
@@ -34,6 +35,8 @@ const OutputPanel: React.FC<OutputPanelProps> = ({ output, onClear }) => {
           清除
         </button>
       </div>
+      {/* <pre> 标签 专门用于展示预格式化的文本（比如代码运行输出、日志、命令行结果）
+      保留文本的原始格式,默认使用等宽字体（monospace）：和代码编辑器字体一致，适合展示程序输出*/}
       <pre style={{
         flex: 1,
         padding: '12px',

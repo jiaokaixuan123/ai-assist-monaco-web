@@ -6,6 +6,7 @@ interface SettingsState {
   semanticHighlight: boolean
 }
 
+// 保存设置选项
 export function useAutoSave(code: string, output: string, settings: SettingsState) {
   // 保存代码
   useEffect(() => {

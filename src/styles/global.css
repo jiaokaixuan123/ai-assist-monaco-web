@@ -47,3 +47,206 @@ button:disabled {
 input[type="checkbox"] {
   accent-color: #0e639c;
 }
+
+/* 📝 Monaco Editor 语义 token 样式覆盖 */
+/* 这些样式确保语义高亮正确显示，即使主题配置未完全生效 */
+
+/* 命名空间 */
+.mtk-namespace,
+.sem-namespace { 
+  color: #4EC9B0 !important; 
+}
+
+/* 类型和类 */
+.mtk-type,
+.mtk-class,
+.sem-type,
+.sem-class { 
+  color: #4EC9B0 !important; 
+  font-weight: 600; 
+}
+
+/* 枚举 */
+.mtk-enum,
+.sem-enum { 
+  color: #4EC9B0 !important; 
+}
+
+/* 接口和结构体 */
+.mtk-interface,
+.mtk-struct,
+.sem-interface,
+.sem-struct { 
+  color: #4EC9B0 !important; 
+}
+
+/* 类型参数 */
+.mtk-typeParam,
+.mtk-typeParameter,
+.sem-typeParam,
+.sem-typeParameter { 
+  color: #4EC9B0 !important; 
+  font-style: italic; 
+}
+
+/* 参数 */
+.mtk-param,
+.mtk-parameter,
+.sem-param,
+.sem-parameter { 
+  color: #9CDCFE !important; 
+  font-style: italic; 
+}
+
+/* 变量 */
+.mtk-var,
+.mtk-variable,
+.sem-var,
+.sem-variable { 
+  color: #9CDCFE !important; 
+}
+
+/* 属性 */
+.mtk-prop,
+.mtk-property,
+.sem-prop,
+.sem-property { 
+  color: #9CDCFE !important; 
+}
+
+/* 枚举成员 */
+.mtk-enumMember,
+.sem-enumMember { 
+  color: #9CDCFE !important; 
+}
+
+/* 事件 */
+.mtk-event,
+.sem-event { 
+  color: #C586C0 !important; 
+}
+
+/* 函数和方法 */
+.mtk-func,
+.mtk-function,
+.mtk-method,
+.sem-func,
+.sem-function,
+.sem-method { 
+  color: #DCDCAA !important; 
+}
+
+/* 宏 */
+.mtk-macro,
+.sem-macro { 
+  color: #C586C0 !important; 
+}
+
+/* Modifier classes */
+.sem-mod-declaration { text-decoration:underline; }
+.sem-mod-static { border-bottom:1px dotted #888; }
+.sem-mod-async { font-style:italic; }
+.sem-mod-documentation { opacity:0.85; }
+
+/* 强调类 - 避免与主题语义颜色冲突 */
+.sym-class { color:#4EC9B0 !important; font-weight:600; }
+.sym-method { color:#DCDCAA !important; font-weight:500; }
+.sym-func { color:#DCDCAA !important; font-weight:500; }
+.sym-var { color:#9CDCFE !important; /* 去掉下划线 */ }
+.sym-prop { color:#9CDCFE !important; font-style:italic; }
+.sym-enum { color:#B8D7A3 !important; font-weight:600; }
+.sym-enumMember { color:#B5CEA8 !important; font-style:italic; }
+
+/* ========== Chat 气泡内 Markdown 样式 ========== */
+.chat-md { word-break: break-word; }
+.chat-md p { margin: 0 0 6px; }
+.chat-md p:last-child { margin-bottom: 0; }
+.chat-md h1, .chat-md h2, .chat-md h3,
+.chat-md h4, .chat-md h5, .chat-md h6 {
+  margin: 8px 0 4px;
+  color: #e8e8e8;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.chat-md h1 { font-size: 14px; }
+.chat-md h2 { font-size: 13px; }
+.chat-md h3 { font-size: 12px; }
+.chat-md ul, .chat-md ol { margin: 4px 0 6px 16px; }
+.chat-md li { margin-bottom: 2px; }
+.chat-md blockquote {
+  border-left: 3px solid #555;
+  margin: 6px 0;
+  padding: 2px 8px;
+  color: #aaa;
+}
+.chat-md a { color: #4ec9b0; }
+.chat-md strong { color: #e8e8e8; }
+.chat-md hr { border: none; border-top: 1px solid #444; margin: 8px 0; }
+/* 表格 */
+.chat-md table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 6px 0;
+  font-size: 11px;
+}
+.chat-md th, .chat-md td {
+  border: 1px solid #444;
+  padding: 3px 6px;
+  text-align: left;
+}
+.chat-md th { background: #1a1a1a; color: #ccc; }
+/* 行内代码 */
+.chat-md code:not(pre code) {
+  background: #1a1a1a;
+  color: #ce9178;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-family: 'Cascadia Code', 'Fira Code', monospace;
+  font-size: 11px;
+}
+/* 代码块 */
+.chat-md pre {
+  background: #1a1a1a !important;
+  border: 1px solid #3a3a3a;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 6px 0;
+  overflow-x: auto;
+  font-size: 11px;
+  line-height: 1.5;
+  scrollbar-width: thin;
+  scrollbar-color: #444 transparent;
+}
+.chat-md pre::-webkit-scrollbar {
+  height: 4px;
+}
+.chat-md pre::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chat-md pre::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 2px;
+}
+.chat-md pre::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+.chat-md pre code {
+  background: transparent !important;
+  padding: 0;
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  font-size: 11px;
+}
+/* 流式光标 */
+.chat-md p:last-child::after {
+  content: '';
+}
+
+/* 会话下拉列表滚动条 */
+.session-list {
+  scrollbar-width: thin;
+  scrollbar-color: #444 transparent;
+}
+.session-list::-webkit-scrollbar        { width: 4px; }
+.session-list::-webkit-scrollbar-track  { background: transparent; }
+.session-list::-webkit-scrollbar-thumb  { background: #444; border-radius: 2px; }
+.session-list::-webkit-scrollbar-thumb:hover { background: #666; }

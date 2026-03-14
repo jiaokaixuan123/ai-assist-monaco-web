@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>装饰器高亮问题调试</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #d4d4d4; }
+        h1 { color: #4EC9B0; }
+        .debug-section { margin: 20px 0; padding: 15px; background: #252526; border-radius: 8px; }
+        .code { background: #1e1e1e; padding: 10px; border-left: 3px solid #0e639c; }
+        .error { color: #f48771; }
+        .success { color: #16825d; }
+        .warning { color: #dcdcaa; }
+        pre { margin: 0; }
+    </style>
+</head>
+<body>
+    <h1>🐛 装饰器语法高亮问题调试</h1>
+    
+    <div class="debug-section">
+        <h2>问题描述</h2>
+        <p class="error">当代码中出现 <code>@decorator</code> 时，后续的函数或类定义整行变成黄色或青色。</p>
+        <div class="code">
+            <pre>@property
+def get_value(self):  <span class="error">← 这一行全部变黄色</span>
+    return self._value</pre>
+        </div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>诊断步骤</h2>
+        <ol>
+            <li>打开浏览器开发者工具（F12）</li>
+            <li>切换到 Console 标签</li>
+            <li>粘贴以下代码并执行：</li>
+        </ol>
+        <div class="code">
+            <pre>// 检查装饰器
+const editor = monaco.editor.getModels()[0]
+const text = editor.getValue()
+const lines = text.split('\n')
+
+// 找到包含装饰器的行
+lines.forEach((line, idx) => {
+    if (line.trim().startsWith('@')) {
+        console.log(`行 ${idx + 1}: ${line}`)
+        
+        // 检查这一行的 tokens
+        const tokens = monaco.editor.tokenize(line, 'python')
+        console.log('Tokens:', tokens)
+    }
+})</pre>
+        </div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>检查 Semantic Tokens</h2>
+        <div class="code">
+            <pre>// 检查 LSP semantic tokens
+if (window.pyrightSemanticDebug) {
+    console.log('Semantic Legend:', window.pyrightSemanticDebug.semanticLegend)
+}
+
+// 检查装饰器相关的 decorations
+const decorations = editor.getAllDecorations()
+    .filter(d => d.options.inlineClassName)
+    
+console.log('Decorations count:', decorations.length)
+decorations.forEach(d => {
+    console.log({
+        range: `${d.range.startLineNumber}:${d.range.startColumn}-${d.range.endLineNumber}:${d.range.endColumn}`,
+        class: d.options.inlineClassName,
+        text: editor.getValueInRange(d.range)
+    })
+})</pre>
+        </div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>可能的原因</h2>
+        <ul>
+            <li class="warning"><strong>LSP Semantic Tokens</strong>
+                <ul>
+                    <li>Pyright 可能将装饰器后的整个函数/类定义识别为一个语义 token</li>
+                    <li>Semantic token 的范围过大，覆盖了多行</li>
+                </ul>
+            </li>
+            <li class="warning"><strong>CSS 样式继承</strong>
+                <ul>
+                    <li>装饰器的黄色样式可能意外继承到后续元素</li>
+                    <li>CSS 选择器过于宽泛</li>
+                </ul>
+            </li>
+            <li class="warning"><strong>Monaco 渲染问题</strong>
+                <ul>
+                    <li>Monaco 可能在渲染 semantic tokens 时出错</li>
+                    <li>Token 边界计算错误</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    
+    <div class="debug-section">
+        <h2>临时解决方案</h2>
+        <div class="code">
+            <pre>// 在浏览器控制台执行，临时禁用语义高亮
+// 查看是否还有颜色覆盖问题
+
+// 方法 1: 通过设置面板关闭"语义高亮"
+
+// 方法 2: 在控制台手动清除所有装饰器
+const editor = monaco.editor.getModels()[0]
+const decorations = editor.getAllDecorations()
+    .filter(d => d.options.inlineClassName)
+    .map(d => d.id)
+    
+editor.deltaDecorations(decorations, [])</pre>
+        </div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>下一步</h2>
+        <ol>
+            <li>运行上述调试代码，查看控制台输出</li>
+            <li>确定是 Monarch、Semantic Tokens 还是 CSS 的问题</li>
+            <li>根据诊断结果应用相应的修复</li>
+        </ol>
+    </div>
+    
+    <div style="margin-top: 30px; text-align: center; color: #888;">
+        <p>如果问题persist，请将控制台输出截图或复制文本</p>
+    </div>
+</body>
+</html>

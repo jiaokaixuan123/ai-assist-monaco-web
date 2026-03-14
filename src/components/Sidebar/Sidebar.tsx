@@ -8,13 +8,15 @@ interface SidebarProps {
   enableAutoComplete: boolean
   enableSyntaxCheck: boolean
   enableSemanticHighlight: boolean
+  enableLanguageService: boolean
   setEnableAutoComplete: (v: boolean) => void
   setEnableSyntaxCheck: (v: boolean) => void
   setEnableSemanticHighlight: (v: boolean) => void
+  setEnableLanguageService: (v: boolean) => void
 }
 
 export function Sidebar(props: SidebarProps) {
-  const { showSettings, code, selectedCode, enableAutoComplete, enableSyntaxCheck, enableSemanticHighlight, setEnableAutoComplete, setEnableSyntaxCheck, setEnableSemanticHighlight } = props
+  const { showSettings, code, selectedCode, enableAutoComplete, enableSyntaxCheck, enableSemanticHighlight, enableLanguageService, setEnableAutoComplete, setEnableSyntaxCheck, setEnableSemanticHighlight, setEnableLanguageService } = props
   return (
     <div style={{
       width: '400px',
@@ -30,9 +32,11 @@ export function Sidebar(props: SidebarProps) {
           enableAutoComplete={enableAutoComplete}
           enableSyntaxCheck={enableSyntaxCheck}
           enableSemanticHighlight={enableSemanticHighlight}
+          enableLanguageService={enableLanguageService}
           setEnableAutoComplete={setEnableAutoComplete}
           setEnableSyntaxCheck={setEnableSyntaxCheck}
           setEnableSemanticHighlight={setEnableSemanticHighlight}
+          setEnableLanguageService={setEnableLanguageService}
           onClearAll={() => {
             if (confirm('确定要清除所有保存的数据吗？\n代码、输出和设置都会被重置。')) {
               localStorage.removeItem('monaco-editor-code')

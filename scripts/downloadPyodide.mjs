@@ -1,3 +1,4 @@
+// 下载Pyodide核心文件和常用包的脚本
 import https from 'https';
 import fs from 'fs';
 import path from 'path';

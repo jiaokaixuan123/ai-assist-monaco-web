@@ -21,6 +21,8 @@ build/
 *.swo
 *~
 .DS_Store
+.claude
+.codeboarding
 
 # 环境变量
 .env

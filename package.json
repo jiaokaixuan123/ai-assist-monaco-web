@@ -10,7 +10,8 @@
     "prepare:pyodide": "node scripts/preparePyodide.mjs",
     "download:pyodide": "node scripts/downloadPyodide.mjs",
     "copy:monaco": "node scripts/copyMonaco.mjs",
-    "postinstall": "npm run copy:monaco"
+    "postinstall": "npm run copy:monaco",
+    "lsp:server": "node server/pyright-ws-server.mjs"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.6.0",
@@ -18,8 +19,15 @@
     "monaco-editor": "^0.54.0",
     "nanoid": "^5.0.4",
     "pyodide": "^0.29.0",
+    "pyright": "^1.1.390",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-markdown": "^10.1.0",
+    "rehype-highlight": "^7.0.2",
+    "remark-gfm": "^4.0.1",
+    "vscode-jsonrpc": "^8.1.0",
+    "vscode-languageserver-protocol": "^3.17.5",
+    "ws": "^8.18.1",
     "zustand": "^4.4.7"
   },
   "devDependencies": {

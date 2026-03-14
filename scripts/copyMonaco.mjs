@@ -1,3 +1,4 @@
+// 将node_modules中vs目录下的 Monaco Editor 运行时文件复制到 public/vs下
 import fs from 'fs-extra';
 import path from 'path';
 import { fileURLToPath } from 'url';

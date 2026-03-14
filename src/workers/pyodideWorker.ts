@@ -7,19 +7,24 @@ let pyodideReadyPromise: Promise<any> | null = null;
 let pyodideReadyFlag = false;
 const pendingMessages: Array<{ id: number; type: string; code?: string }> = [];
 
+// 初始化 Pyodide
 async function initPyodide() {
   if (pyodideReadyPromise) return pyodideReadyPromise;
   console.log('🚀 [worker] 开始初始化 Pyodide (module + dynamic import)');
   try {
-    // @ts-ignore 动态运行时导入，不参与打包静态解析
+    // 动态导入 Pyodide 模块（避免打包时静态解析，减小主包体积）
     const mod = await import(/* @vite-ignore */ new URL('/pyodide/pyodide.mjs', self.location.origin).toString());
     if (!mod.loadPyodide) throw new Error('loadPyodide 未从 pyodide.mjs 导出');
+
+    // 加载 Pyodide（fullStdLib: false 不加载完整标准库，加快初始化）
     pyodideReadyPromise = mod.loadPyodide({ indexURL: '/pyodide/', fullStdLib: false });
     const pyodide = await pyodideReadyPromise;
+
+    // 标记就绪，通知主线程
     pyodideReadyFlag = true;
     console.log('✅ [worker] Pyodide 就绪, version:', pyodide.version);
-    // 发送 ready 消息
     self.postMessage({ id: -1, type: 'ready', version: pyodide.version });
+
     // 处理排队消息
     if (pendingMessages.length) {
       console.log('📦 处理排队消息数量:', pendingMessages.length);
@@ -33,13 +38,17 @@ async function initPyodide() {
   }
 }
 
+// 监听主线程消息
 function safeString(v: any) { try { return String(v); } catch { return '[不可显示的对象]'; } }
 
+// 处理消息: 运行代码、格式化、分析、语法检查
 async function processMessage(pyodide: any, payload: { id: number; type: string; code?: string }) {
   const { id, type, code = '' } = payload;
+  // 运行代码：执行用户代码并捕获输出
   if (type === 'run') {
     try {
-      pyodide.globals.set('USER_CODE', code);
+      pyodide.globals.set('USER_CODE', code);// 把用户代码传入 Pyodide 全局变量
+      // 核心捕获逻辑：重定向 stdout/stderr，提取最后一行表达式结果
       const capture = `import sys, io, traceback, ast, json
 source = USER_CODE
 stdout_io, stderr_io = io.StringIO(), io.StringIO()
@@ -75,35 +84,48 @@ payload = {
   'hadError': had_error
 }
 json.dumps(payload)`;
-      const jsonStr = await pyodide.runPythonAsync(capture);
+      const jsonStr = await pyodide.runPythonAsync(capture);  // 运行捕获代码
       let parsed: any;
       try { parsed = JSON.parse(jsonStr); } catch { parsed = { stdout: '', stderr: jsonStr, result: null, hadError: true }; }
+      // 合并输出（stdout + stderr + 结果）
       let combined = '';
-      if (parsed.stdout) combined += parsed.stdout;
-      if (parsed.stderr) combined += (combined ? '\n' : '') + parsed.stderr;
-      if (!combined && parsed.result) combined = `[结果] ${parsed.result}`;
+      if (parsed.stdout) combined += parsed.stdout;                             // 捕获标准输出
+      if (parsed.stderr) combined += (combined ? '\n' : '') + parsed.stderr;    // 捕获错误输出
+      if (!combined && parsed.result) combined = `[结果] ${parsed.result}`;     // 合并结果输出
       if (!combined) combined = '（无输出）';
+      // 发送结果到主线程
       self.postMessage({ id, type: 'run', result: combined, hadError: parsed.hadError });
     } catch (err: any) {
       self.postMessage({ id, type: 'run', result: `Error: ${err.message}`, error: err.message || safeString(err), hadError: true });
     }
     return;
   }
+  // 格式化代码：使用 autopep8（通过 micropip 按需安装）(micropip 是 Pyodide 官方内置的轻量级包管理器)
   if (type === 'format') {
     try {
       pyodide.globals.set('CODE_TO_FORMAT', code);
-      const formatted = await pyodide.runPythonAsync(`import ast\ntry:\n ast.parse(CODE_TO_FORMAT)\n formatted=CODE_TO_FORMAT\nexcept Exception:\n formatted=CODE_TO_FORMAT\nformatted`);
+      // 先在 JS 层加载 micropip（Pyodide 内置包，需显式加载）
+      await pyodide.loadPackage('micropip');
+      const formatted = await pyodide.runPythonAsync(`
+import sys, micropip
+if 'autopep8' not in sys.modules:
+  await micropip.install('autopep8')
+import autopep8
+autopep8.fix_code(CODE_TO_FORMAT, options={'aggressive': 1})
+`);
       self.postMessage({ id, type: 'format', result: formatted });
     } catch (err: any) {
       self.postMessage({ id, type: 'format', error: err.message || safeString(err) });
     }
     return;
   }
+  // 处理 ping 消息
   if (type === 'ping') {
     // 已在 initPyodide 完成后发送 ready，这里如果已经就绪直接回应
     if (pyodideReadyFlag) self.postMessage({ id, type: 'ready' });
     return;
   }
+  // 分析代码：提取函数、类、变量等符号信息
   if (type === 'analyze') {
     try {
       pyodide.globals.set('CODE_ANALYZE', code);
@@ -114,6 +136,7 @@ json.dumps(payload)`;
     }
     return;
   }
+  // 语法检查：尝试编译代码捕获 SyntaxError
   if (type === 'syntax') {
     try {
       pyodide.globals.set('CODE_SYNTAX', code);
@@ -127,15 +150,18 @@ json.dumps(payload)`;
   self.postMessage({ id, error: 'Unknown type: ' + type });
 }
 
+// 监听主线程消息
 self.onmessage = async (e) => {
   const { id, type, code } = e.data || {};
   try {
     if (!pyodideReadyPromise) initPyodide(); // 触发初始化但不 await，避免阻塞 ping 后的队列
+    // 未就绪且非 ping 消息 → 加入队列
     if (!pyodideReadyFlag && type !== 'ping') {
       pendingMessages.push({ id, type, code });
       return;
     }
-    const pyodide = await pyodideReadyPromise; // 此时肯定就绪
+    // 就绪后处理消息
+    const pyodide = await pyodideReadyPromise;
     processMessage(pyodide, { id, type, code });
   } catch (err: any) {
     self.postMessage({ id, error: err.message || safeString(err) });

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python 语法高亮测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #4EC9B0;
+            border-bottom: 2px solid #3e3e3e;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #252526;
+            border-radius: 8px;
+        }
+        .test-title {
+            color: #DCDCAA;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .color-sample {
+            display: inline-block;
+            padding: 4px 12px;
+            margin: 5px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+        }
+        .keyword { color: #C586C0; }
+        .string { color: #CE9178; }
+        .number { color: #B5CEA8; }
+        .comment { color: #6A9955; font-style: italic; }
+        .function { color: #DCDCAA; }
+        .class { color: #4EC9B0; font-weight: 600; }
+        .variable { color: #9CDCFE; }
+        .builtin { color: #DCDCAA; }
+        .decorator { color: #DCDCAA; }
+        .operator { color: #D4D4D4; }
+        
+        .checklist {
+            list-style: none;
+            padding-left: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+        }
+        .checklist li:before {
+            content: "✓ ";
+            color: #4EC9B0;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        
+        .expected {
+            background: #1a472a;
+            padding: 10px;
+            border-left: 3px solid #4EC9B0;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 Python 语法高亮配色测试</h1>
+    
+    <div class="test-section">
+        <div class="test-title">VS Code Dark+ 主题配色参考</div>
+        <p>以下是正确的 Python 语法高亮颜色（VS Code Dark+ 主题标准）：</p>
+        
+        <div style="margin: 20px 0;">
+            <span class="color-sample keyword">关键字 (keyword) - #C586C0</span>
+            <span class="color-sample string">字符串 (string) - #CE9178</span>
+            <span class="color-sample number">数字 (number) - #B5CEA8</span>
+            <span class="color-sample comment">注释 (comment) - #6A9955</span>
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <span class="color-sample function">函数 (function) - #DCDCAA</span>
+            <span class="color-sample class">类 (class) - #4EC9B0</span>
+            <span class="color-sample variable">变量 (variable) - #9CDCFE</span>
+            <span class="color-sample builtin">内置函数 (builtin) - #DCDCAA</span>
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <span class="color-sample decorator">装饰器 (decorator) - #DCDCAA</span>
+            <span class="color-sample operator">操作符 (operator) - #D4D4D4</span>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <div class="test-title">测试代码示例</div>
+        <div class="expected">
+            <strong>预期效果：</strong><br>
+            在编辑器中，以下代码应该显示正确的语法高亮：
+        </div>
+        
+        <pre style="background: #1e1e1e; padding: 15px; border-radius: 6px; overflow-x: auto;">
+<span class="comment"># 这是一个注释</span>
+<span class="keyword">import</span> <span class="variable">sys</span>
+
+<span class="variable">CONSTANT</span> = <span class="number">3.14</span>
+<span class="variable">message</span> = <span class="string">"Hello, World!"</span>
+
+<span class="decorator">@property</span>
+<span class="keyword">def</span> <span class="function">get_value</span>(<span class="variable">self</span>):
+    <span class="keyword">return</span> <span class="variable">self</span>.<span class="variable">_value</span>
+
+<span class="keyword">class</span> <span class="class">MyClass</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(<span class="variable">self</span>, <span class="variable">value</span>: <span class="builtin">int</span>):
+        <span class="variable">self</span>.<span class="variable">value</span> = <span class="variable">value</span>
+    
+    <span class="keyword">def</span> <span class="function">process</span>(<span class="variable">self</span>):
+        <span class="variable">result</span> = <span class="builtin">len</span>(<span class="builtin">range</span>(<span class="number">10</span>))
+        <span class="builtin">print</span>(<span class="string">f"Result: </span><span class="variable">{result}</span><span class="string">"</span>)
+        <span class="keyword">return</span> <span class="variable">result</span>
+        </pre>
+    </div>
+    
+    <div class="test-section">
+        <div class="test-title">✅ 修复内容检查清单</div>
+        <ul class="checklist">
+            <li>注册了 Python Monarch tokenizer（基础词法分析）</li>
+            <li>配置了完整的 Python 语言定义</li>
+            <li>定义了 pyright-dark 主题（包含所有 token 类型）</li>
+            <li>添加了词法 token 颜色规则（关键字、字符串、数字等）</li>
+            <li>添加了语义 token 颜色规则（函数、类、变量等）</li>
+            <li>更新了 CSS 样式文件（确保颜色覆盖生效）</li>
+            <li>支持 Python 特性：装饰器、f-string、注释等</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <div class="test-title">🔍 如何验证修复</div>
+        <ol style="padding-left: 20px;">
+            <li><strong>打开编辑器</strong>：在主应用中打开 Monaco Editor</li>
+            <li><strong>输入测试代码</strong>：复制上面的示例代码到编辑器</li>
+            <li><strong>检查颜色</strong>：
+                <ul style="margin-top: 10px;">
+                    <li>关键字（def, class, import 等）应该是 <span class="keyword">紫色</span></li>
+                    <li>字符串应该是 <span class="string">橙色</span></li>
+                    <li>数字应该是 <span class="number">淡绿色</span></li>
+                    <li>注释应该是 <span class="comment">绿色斜体</span></li>
+                    <li>函数名应该是 <span class="function">黄色</span></li>
+                    <li>类名应该是 <span class="class">青色粗体</span></li>
+                    <li>变量应该是 <span class="variable">浅蓝色</span></li>
+                </ul>
+            </li>
+            <li><strong>开启语义高亮</strong>：确保设置面板中的"语义高亮"选项已启用</li>
+            <li><strong>对比参考</strong>：将编辑器中的颜色与上方的颜色示例对比</li>
+        </ol>
+    </div>
+    
+    <div class="test-section" style="background: #2d3748; border: 2px solid #4EC9B0;">
+        <div class="test-title" style="color: #4EC9B0;">📊 修复说明</div>
+        <p><strong>问题原因：</strong></p>
+        <p>Monaco Editor 默认不包含 Python 的词法分析器（Monarch tokenizer），导致基础语法高亮失效。只有语义高亮（需要 LSP 服务器）在工作，但覆盖不全面。</p>
+        
+        <p style="margin-top: 15px;"><strong>解决方案：</strong></p>
+        <ol style="padding-left: 20px;">
+            <li>创建了完整的 Python Monarch tokenizer 配置文件</li>
+            <li>注册了 Python 语言配置（括号匹配、注释、折叠等）</li>
+            <li>扩展了主题规则，包含所有 Python token 类型</li>
+            <li>确保词法高亮（Monarch）+ 语义高亮（LSP）协同工作</li>
+        </ol>
+        
+        <p style="margin-top: 15px;"><strong>技术实现：</strong></p>
+        <ul style="padding-left: 20px;">
+            <li><code>pythonLanguage.ts</code> - Python Monarch tokenizer 定义</li>
+            <li><code>App.tsx</code> - 注册语言和应用主题</li>
+            <li><code>global.css</code> - CSS 样式覆盖（确保颜色生效）</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <div class="test-title">💡 提示</div>
+        <p>如果某些符号仍然没有颜色或颜色不正确：</p>
+        <ul style="padding-left: 20px; margin-top: 10px;">
+            <li>检查浏览器控制台是否有错误</li>
+            <li>确认 Pyright LSP 服务器是否正常连接</li>
+            <li>尝试刷新页面（Ctrl+F5 强制刷新）</li>
+            <li>检查"语言服务"和"语义高亮"开关是否开启</li>
+        </ul>
+    </div>
+    
+    <div style="text-align: center; margin-top: 30px; padding: 20px; border-top: 1px solid #3e3e3e;">
+        <p style="color: #888;">Monaco AI 编程助手 - Python 语法高亮修复</p>
+    </div>
+</body>
+</html>

@@ -40,10 +40,11 @@ npm run dev
 
 访问 `http://localhost:5173/`
 
-> **💡 提示**：  
-> - Pyodide 和 Monaco Editor 文件（~350 MB）**不在 Git 仓库中**  
-> - `npm install` 会自动复制 Monaco Editor  
-> - Pyodide 可选：开发时用本地文件，生产可用 CDN  
+> **💡 提示**：
+>
+> - Pyodide 和 Monaco Editor 文件（~350 MB）**不在 Git 仓库中**
+> - `npm install` 会自动复制 Monaco Editor
+> - Pyodide 可选：开发时用本地文件，生产可用 CDN
 > - 详见 [文件管理说明](#-文件管理) 和 [部署指南](./DEPLOYMENT.md)
 
 ### 可用命令
@@ -79,20 +80,21 @@ npm run copy:monaco        # 复制 Monaco 文件（install 自动执行）
 ### 代码智能
 
 - **自动补全**：
+
   - Python 内置函数（print, len, range 等）
   - 代码片段（for, while, if, def, class）
   - 用户定义的函数和类
-  
 - **悬停提示**：
+
   - 内置函数的文档
   - 用户定义符号的详细信息
-
 - **语法检查**：
+
   - 实时检测语法错误
   - 红色波浪线标记
   - 错误提示
-
 - **语义高亮**：
+
   - 自动识别用户定义的函数（黄色）
   - 自动识别用户定义的类（青色）
   - 自动识别用户定义的变量（蓝色）
@@ -107,6 +109,8 @@ npm run copy:monaco        # 复制 Monaco 文件（install 自动执行）
 ## 📁 项目结构
 
 ```
+
+
 monaco-ai-assist-web/
 ├── public/
 │   ├── pyodide/          # Pyodide 文件（本地）
@@ -126,6 +130,24 @@ monaco-ai-assist-web/
 ├── package.json
 ├── vite.config.ts
 └── tsconfig.json
+
+Monaco Editor (渲染层)
+│
+├── Monarch Tokenizer        词法高亮（本地，pythonLanguage.ts）
+├── DocumentSemanticTokens   语义高亮（pyrightClient.ts → WS → Pyright）
+├── CompletionItemProvider   智能补全（pyrightClient.ts → WS → Pyright）
+├── HoverProvider            悬停提示（pyrightClient.ts → WS → Pyright）
+├── DefinitionProvider       跳转定义（pyrightClient.ts → WS → Pyright）
+├── ModelMarkers             错误诊断（applyDiagnostics ← publishDiagnostics）
+│
+├── WebSocket（3001 port）
+│   └── pyright-ws-server.mjs ──stdio──► pyright-langserver
+│
+└── Pyodide Worker（pyodideWorker.ts）
+    ├── run       运行代码
+    ├── format    格式化（当前是 ast.parse 占位，未接 autopep8）
+    └── syntax    语法检查（存在但从未被调用！）
+
 ```
 
 ## 🔧 配置
@@ -167,6 +189,7 @@ loader.config({ monaco })
 ### 功能开关
 
 点击右上角的设置图标，可以切换：
+
 - ✅ 自动补全
 - ✅ 语法检查
 - ✅ 语义高亮
@@ -174,6 +197,7 @@ loader.config({ monaco })
 ### 代码选择
 
 在编辑器中选择代码，右侧边栏会显示：
+
 - 选择的代码
 - 字符数和行数
 
@@ -183,10 +207,10 @@ loader.config({ monaco })
 
 本项目包含两个大型库文件，**不会上传到 Git 仓库**：
 
-| 文件 | 大小 | 位置 | Git 状态 |
-|------|------|------|----------|
-| Pyodide | ~300 MB | `public/pyodide/` | ❌ 已排除 |
-| Monaco Editor | ~50 MB | `public/vs/` | ❌ 已排除 |
+| 文件          | 大小    | 位置                | Git 状态  |
+| ------------- | ------- | ------------------- | --------- |
+| Pyodide       | ~300 MB | `public/pyodide/` | ❌ 已排除 |
+| Monaco Editor | ~50 MB  | `public/vs/`      | ❌ 已排除 |
 
 ### 为什么不上传？
 
@@ -217,6 +241,7 @@ VITE_PYODIDE_URL=https://cdn.jsdelivr.net/pyodide/v0.29.0/full/
 ```
 
 详细说明请参考：
+
 - 📖 [完整部署指南](./DEPLOYMENT.md)
 - 📋 [文件管理 FAQ](./FILE_MANAGEMENT_FAQ.md)
 - ⚡ [3分钟速查](./QUICK_REFERENCE.md)
@@ -228,6 +253,7 @@ VITE_PYODIDE_URL=https://cdn.jsdelivr.net/pyodide/v0.29.0/full/
 ### Q: Pyodide 加载很慢？
 
 **A:** Pyodide 首次加载需要下载约 10MB 的文件。本项目使用本地文件，所以加载速度较快。如果仍然慢，检查：
+
 1. 开发服务器是否正常运行
 2. 浏览器缓存是否清理
 3. `public/pyodide/` 目录下的文件是否完整
@@ -235,6 +261,7 @@ VITE_PYODIDE_URL=https://cdn.jsdelivr.net/pyodide/v0.29.0/full/
 ### Q: Monaco Editor 不显示？
 
 **A:** 检查：
+
 1. 浏览器控制台是否有错误
 2. Monaco Worker 是否正确加载
 3. 清除浏览器缓存并硬刷新（Ctrl+F5）
@@ -242,6 +269,7 @@ VITE_PYODIDE_URL=https://cdn.jsdelivr.net/pyodide/v0.29.0/full/
 ### Q: 代码智能不工作？
 
 **A:** 确保：
+
 1. Pyodide 已加载完成（状态栏显示"Python 环境已加载"）
 2. 在设置中启用了对应功能
 3. 代码有语法错误时某些功能可能不可用
