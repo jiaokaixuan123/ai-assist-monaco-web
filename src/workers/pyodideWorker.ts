@@ -20,6 +20,14 @@ async function initPyodide() {
     pyodideReadyPromise = mod.loadPyodide({ indexURL: '/pyodide/', fullStdLib: false });
     const pyodide = await pyodideReadyPromise;
 
+    // 预加载常用包
+    try {
+      await pyodide.loadPackage(['numpy', 'pandas', 'matplotlib', 'micropip']);
+      console.log('✅ [worker] 常用包已加载');
+    } catch (e) {
+      console.warn('⚠️ [worker] 部分包加载失败:', e);
+    }
+
     // 标记就绪，通知主线程
     pyodideReadyFlag = true;
     console.log('✅ [worker] Pyodide 就绪, version:', pyodide.version);
@@ -129,7 +137,28 @@ autopep8.fix_code(CODE_TO_FORMAT, options={'aggressive': 1})
   if (type === 'analyze') {
     try {
       pyodide.globals.set('CODE_ANALYZE', code);
-      const jsonSymbols = await pyodide.runPythonAsync(`import ast, json\nsource = CODE_ANALYZE\nsymbols=[]\ntry:\n tree=ast.parse(source)\n for n in ast.walk(tree):\n  if isinstance(n, ast.FunctionDef):\n   params=[a.arg for a in n.args.args]\n   symbols.append({'name':n.name,'type':'function','detail':f"def {n.name}({', '.join(params)})"})\n  elif isinstance(n, ast.ClassDef):\n   symbols.append({'name':n.name,'type':'class','detail':f"class {n.name}"})\n  elif isinstance(n, ast.Assign):\n   for t in n.targets:\n    if isinstance(t, ast.Name):\n     symbols.append({'name':t.id,'type':'variable','detail':f"{t.id} = ..."})\nexcept Exception as e:\n pass\n# 去重\nuniq={}\nfor s in symbols: uniq[s['name']]=s\njson.dumps(list(uniq.values()))`)
+      const jsonSymbols = await pyodide.runPythonAsync(`import ast, json
+source = CODE_ANALYZE
+symbols = []
+try:
+  tree = ast.parse(source)
+  for n in ast.walk(tree):
+    if isinstance(n, ast.FunctionDef):
+      params = [a.arg for a in n.args.args]
+      symbols.append({'name': str(n.name), 'type': 'function', 'detail': f"def {n.name}({', '.join(params)})"})
+    elif isinstance(n, ast.ClassDef):
+      symbols.append({'name': str(n.name), 'type': 'class', 'detail': f"class {n.name}"})
+    elif isinstance(n, ast.Assign):
+      for t in n.targets:
+        if isinstance(t, ast.Name):
+          symbols.append({'name': str(t.id), 'type': 'variable', 'detail': f"{t.id} = ..."})
+except Exception:
+  pass
+# 去重并确保所有值都是可序列化的
+uniq = {}
+for s in symbols:
+  uniq[s['name']] = {'name': str(s['name']), 'type': str(s['type']), 'detail': str(s['detail'])}
+json.dumps(list(uniq.values()))`)
       self.postMessage({ id, type: 'analyze', result: jsonSymbols });
     } catch (err: any) {
       self.postMessage({ id, type: 'analyze', error: err.message || safeString(err) });

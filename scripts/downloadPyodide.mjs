@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PYODIDE_VERSION = '0.29.0';
-const BASE_URL = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/`;
+const BASE_URL = `https://unpkg.com/pyodide@${PYODIDE_VERSION}/`;
 const OUTPUT_DIR = path.join(__dirname, '../public/pyodide');
 
 // 核心文件列表
@@ -29,22 +29,46 @@ const commonPackages = [
   'micropip-0.11.0-py3-none-any.whl'
 ];
 
-function downloadFile(url, dest) {
+function downloadFile(url, dest, retries = 0) {
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(dest);
-    https.get(url, (response) => {
+    const request = https.get(url, { timeout: 30000 }, (response) => {
       if (response.statusCode === 200) {
         response.pipe(file);
         file.on('finish', () => {
           file.close();
           resolve();
         });
+      } else if (response.statusCode === 302 || response.statusCode === 301) {
+        file.close();
+        fs.unlink(dest, () => {});
+        downloadFile(response.headers.location, dest, retries).then(resolve).catch(reject);
       } else {
-        reject(new Error(`Failed to download ${url}: ${response.statusCode}`));
+        file.close();
+        fs.unlink(dest, () => {});
+        reject(new Error(`HTTP ${response.statusCode}`));
       }
     }).on('error', (err) => {
+      file.close();
       fs.unlink(dest, () => {});
-      reject(err);
+      if (retries > 0) {
+        setTimeout(() => {
+          downloadFile(url, dest, retries - 1).then(resolve).catch(reject);
+        }, 2000);
+      } else {
+        reject(err);
+      }
+    }).on('timeout', () => {
+      request.destroy();
+      file.close();
+      fs.unlink(dest, () => {});
+      if (retries > 0) {
+        setTimeout(() => {
+          downloadFile(url, dest, retries - 1).then(resolve).catch(reject);
+        }, 2000);
+      } else {
+        reject(new Error('timeout'));
+      }
     });
   });
 }
