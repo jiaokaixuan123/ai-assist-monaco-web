@@ -73,6 +73,18 @@ function usePyodideWorker() {
 
   const runCode = (code: string) => callWorker('run', code)
   const formatCode = (code: string) => callWorker('format', code)
+  const traceCode = async (code: string) => {
+    const res = await callWorker('trace', code)
+    if (res.error) return { steps: [], lines: code.split('\n'), error: res.error }
+    try {
+      const parsed = JSON.parse(res.result || '{}')
+      return {
+        steps: parsed.steps || [],
+        lines: parsed.lines || code.split('\n'),
+        error: parsed.error || null,
+      }
+    } catch { return { steps: [], lines: code.split('\n'), error: '解析追踪数据失败' } }
+  }
   const checkSyntax = async (code: string): Promise<Array<{ line: number; message: string }>> => {
     const res = await callWorker('syntax', code)
     if (!res.result) return []
@@ -83,7 +95,7 @@ function usePyodideWorker() {
     } catch { return [] }
   }
 
-  return { isReady, runCode, formatCode, checkSyntax }
+  return { isReady, runCode, formatCode, checkSyntax, traceCode }
 }
 
 import Header from '../components/layout/Header'
@@ -102,6 +114,8 @@ import { registerAIActions, applyToEditor } from '../lsp/aiActions'
 import type { AIActionEvent } from '../lsp/aiActions'
 import { getModelClient } from '../services/modelClient'
 import NavBar from '../components/learn/NavBar'
+import Visualizer from '../components/Visualizer/Visualizer'
+import type { TraceResult } from '../components/Visualizer/types'
 
 export default function EditorPage() {
   const getInitialCode = () =>
@@ -119,7 +133,9 @@ export default function EditorPage() {
   const initialSettings = getInitialSettings()
   const [code, setCode] = useState(getInitialCode)
   const [output, setOutput] = useState(getInitialOutput)
-  const { isReady, runCode, formatCode: formatWithPyodide, checkSyntax } = usePyodideWorker()
+  const [traceResult, setTraceResult] = useState<TraceResult | null>(null)
+  const [isTracing, setIsTracing] = useState(false)
+  const { isReady, runCode, formatCode: formatWithPyodide, checkSyntax, traceCode } = usePyodideWorker()
   const loadingStatus = isReady ? 'Python 环境已加载' : '正在加载 Python 环境...'
   const [isRunning, setIsRunning] = useState(false)
   const [lspConnected, setLspConnected] = useState(false)
@@ -197,6 +213,17 @@ export default function EditorPage() {
   }
 
   const { selectedCode, attachSelectionListener } = useSelection()
+
+  const handleTraceCode = async () => {
+    if (!isReady) return
+    setIsTracing(true)
+    try {
+      const result = await traceCode(code)
+      setTraceResult(result)
+    } finally {
+      setIsTracing(false)
+    }
+  }
 
   const handleEditorDidMount = (editor: monaco.editor.IStandaloneCodeEditor, m: typeof monaco) => {
     editorRef.current = editor
@@ -277,6 +304,8 @@ export default function EditorPage() {
         onFormat={formatCodeLocal}
         onRun={handleRunCode}
         isRunning={isRunning}
+        onTrace={handleTraceCode}
+        isTracing={isTracing}
       />
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
@@ -309,6 +338,9 @@ export default function EditorPage() {
           type: !isReady ? 'loading' : lspConnected ? 'success' : 'idle',
         }}
       />
+      {traceResult && (
+        <Visualizer result={traceResult} onClose={() => setTraceResult(null)} />
+      )}
     </div>
   )
 }

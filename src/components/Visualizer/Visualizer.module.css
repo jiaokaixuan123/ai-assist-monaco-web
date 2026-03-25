@@ -1,0 +1,374 @@
+/* ── 全屏遮罩 ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.15s ease;
+}
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+.modal {
+  width: 96vw;
+  height: 92vh;
+  background: #1e1e2e;
+  border-radius: 10px;
+  border: 1px solid #313244;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+}
+
+/* ── 工具栏 ── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #181825;
+  border-bottom: 1px solid #313244;
+  flex-shrink: 0;
+}
+.toolbarTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #cba6f7;
+  margin-right: 8px;
+  white-space: nowrap;
+}
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+.btn {
+  padding: 5px 12px;
+  background: #313244;
+  border: none;
+  border-radius: 5px;
+  color: #cdd6f4;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn:hover:not(:disabled) { background: #45475a; }
+.btn:disabled { opacity: 0.35; cursor: default; }
+.playBtn { background: #cba6f7; color: #1e1e2e; font-weight: 600; }
+.playBtn:hover { background: #d0bfff; }
+.speedSel {
+  padding: 4px 8px;
+  background: #313244;
+  border: none;
+  border-radius: 5px;
+  color: #cdd6f4;
+  font-size: 12px;
+  cursor: pointer;
+}
+.stepInfo {
+  font-size: 11px;
+  color: '#6c7086';
+  padding: 0 4px;
+}
+.closeBtn {
+  margin-left: auto;
+  padding: 5px 14px;
+  background: transparent;
+  border: 1px solid #45475a;
+  border-radius: 5px;
+  color: '#6c7086';
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.closeBtn:hover { background: #f38ba822; color: #f38ba8; border-color: #f38ba8; }
+
+/* ── 进度条 ── */
+.progress {
+  padding: 4px 14px;
+  background: #181825;
+  border-bottom: 1px solid #313244;
+  flex-shrink: 0;
+}
+.slider {
+  width: 100%;
+  accent-color: #cba6f7;
+  cursor: pointer;
+}
+
+/* ── 步骤说明 ── */
+.stepBanner {
+  padding: 6px 16px;
+  background: #181825;
+  border-bottom: 1px solid #313244;
+  border-left: 3px solid #89b4fa;
+  font-size: 13px;
+  color: #cdd6f4;
+  flex-shrink: 0;
+}
+.callChain { font-size: 11px; color: #6c7086; }
+
+/* ── 主体 ── */
+.body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── 代码面板 ── */
+.leftPane {
+  width: 40%;
+  border-right: 1px solid #313244;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+.paneTitle {
+  padding: 6px 14px;
+  font-size: 11px;
+  color: #6c7086;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  background: #181825;
+  border-bottom: 1px solid #313244;
+  flex-shrink: 0;
+}
+.changed { color: #f9e2af; font-weight: 600; text-transform: none; letter-spacing: 0; margin-left: 4px; }
+
+.codePanel {
+  flex: 1;
+  overflow-y: auto;
+  font-family: 'Consolas', 'Menlo', monospace;
+  font-size: 13.5px;
+  line-height: 1.7;
+  padding: 8px 0;
+}
+.codeLine {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.codeLine:hover { background: #313244; }
+.codeLineActive {
+  background: rgba(241, 196, 15, 0.12) !important;
+  border-left: 3px solid #f1c40f;
+}
+.lineNo {
+  min-width: 36px;
+  text-align: right;
+  color: #45475a;
+  margin-right: 14px;
+  user-select: none;
+  font-size: 12px;
+}
+.lineContent {
+  flex: 1;
+  color: #cdd6f4;
+  white-space: pre;
+}
+.arrow {
+  color: #f1c40f;
+  font-size: 12px;
+  margin-left: 8px;
+  animation: pulse 0.6s ease infinite alternate;
+}
+@keyframes pulse { from { opacity: 0.5 } to { opacity: 1 } }
+
+/* ── 列2：调用栈 + 变量 ── */
+.stackCol {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  border-right: 1px solid #313244;
+}
+.stackArea {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── 列3：输出 ── */
+.outputCol {
+  width: 22%;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+.outputArea {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 10px 14px;
+}
+.empty {
+  color: #45475a;
+  font-size: 13px;
+  padding: 16px;
+  text-align: center;
+}
+
+/* ── 栈帧卡片 ── */
+.frame {
+  border: 1px solid #313244;
+  border-radius: 6px;
+  background: #181825;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.frameTop {
+  border-color: #89b4fa;
+  box-shadow: 0 0 0 1px #89b4fa22;
+}
+.frameHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  background: #1e1e2e;
+  border-bottom: 1px solid #313244;
+}
+.frameName {
+  font-size: 12px;
+  font-weight: 700;
+  color: #89b4fa;
+}
+.frameLine {
+  font-size: 11px;
+  color: #6c7086;
+  margin-left: auto;
+}
+.frameBody {
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.emptyVars { color: #45475a; font-size: 12px; }
+
+/* ── 变量行 ── */
+.varRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  animation: slideIn 0.2s ease;
+}
+@keyframes slideIn { from { opacity: 0; transform: translateX(-6px) } to { opacity: 1; transform: none } }
+.varName { color: #89b4fa; font-weight: 700; font-size: 13px; min-width: 80px; font-family: monospace; }
+.varLabel { color: #89b4fa; font-weight: 700; font-size: 13px; font-family: monospace; }
+.varEq { color: #6c7086; }
+
+/* ── 值徽章 ── */
+.badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.badgeNone { background: #45475a33; color: #6c7086; }
+.badgeBool { background: #f38ba822; color: #f38ba8; }
+.badgeNum  { background: #f9e2af22; color: #f9e2af; }
+.badgeStr  { background: #a6e3a122; color: #a6e3a1; }
+.badgeFn   { background: #cba6f722; color: #cba6f7; }
+.badgeObj  { background: #89b4fa22; color: #89b4fa; }
+
+/* ── 集合 (list/tuple/dict/set) ── */
+.collectionBox {
+  border: 1px solid #313244;
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 2px 0;
+  animation: slideIn 0.2s ease;
+}
+.collectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  background: #1e1e2e;
+  cursor: pointer;
+  user-select: none;
+}
+.collectionHeader:hover { background: #313244; }
+.typeTag {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: #89b4fa22;
+  color: #89b4fa;
+}
+.lenTag {
+  font-size: 10px;
+  color: #6c7086;
+}
+.toggle { color: #6c7086; font-size: 11px; margin-left: auto; }
+.collectionBody {
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: #13131e;
+}
+.bracket { color: #6c7086; font-size: 13px; font-family: monospace; }
+.indexedItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 4px;
+}
+.indexNum {
+  min-width: 22px;
+  text-align: right;
+  color: #45475a;
+  font-size: 11px;
+  font-family: monospace;
+}
+.dictRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+}
+.dictArrow { color: #6c7086; }
+.more { color: #45475a; font-size: 11px; padding: 2px 4px; }
+
+/* ── stdout + error ── */
+.stdout {
+  font-family: 'Consolas', 'Menlo', monospace;
+  font-size: 12px;
+  color: #a6e3a1;
+  padding: 8px 12px;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.errorBox {
+  padding: 8px 12px;
+  background: #f38ba811;
+  border-radius: 6px;
+  border: 1px solid #f38ba844;
+  color: #f38ba8;
+  font-size: 12px;
+}

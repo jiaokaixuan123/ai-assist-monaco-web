@@ -181,7 +181,7 @@ json.dumps(list(uniq.values()))`)
     try {
       pyodide.globals.set('USER_CODE_TRACE', code);
       const traceResult = await pyodide.runPythonAsync(`
-import sys, io, json, traceback
+import sys, io, json, types
 
 source = USER_CODE_TRACE
 steps = []
@@ -189,46 +189,93 @@ output_buffer = io.StringIO()
 old_stdout = sys.stdout
 sys.stdout = output_buffer
 
-def trace_calls(frame, event, arg):
-    if event == 'line':
-        # 只追踪用户代码（文件名为 <user>）
-        if frame.f_code.co_filename == '<user>':
-            line_no = frame.f_lineno
-            # 复制局部变量（避免引用问题）
-            local_vars = {}
-            for k, v in frame.f_locals.items():
-                try:
-                    # 只保留基本类型，复杂对象用 repr
-                    if isinstance(v, (int, float, str, bool, type(None))):
-                        local_vars[k] = v
-                    elif isinstance(v, (list, tuple, dict, set)):
-                        # 限制长度，避免过大
-                        if len(str(v)) < 200:
-                            local_vars[k] = v
-                        else:
-                            local_vars[k] = f"{type(v).__name__}(...)"
-                    else:
-                        local_vars[k] = repr(v)[:100]
-                except:
-                    local_vars[k] = "<error>"
+def serialize_value(v, depth=0):
+    if depth > 3:
+        return {"type": "ellipsis", "repr": "..."}
+    t = type(v).__name__
+    if v is None:
+        return {"type": "None", "repr": "None"}
+    elif isinstance(v, bool):
+        return {"type": "bool", "repr": repr(v), "value": v}
+    elif isinstance(v, int):
+        return {"type": "int", "repr": repr(v), "value": v}
+    elif isinstance(v, float):
+        return {"type": "float", "repr": repr(v), "value": v}
+    elif isinstance(v, str):
+        display = repr(v) if len(v) < 50 else repr(v[:50]) + "..."
+        return {"type": "str", "repr": display, "value": v[:100]}
+    elif isinstance(v, (list, tuple)):
+        kind = "list" if isinstance(v, list) else "tuple"
+        items = [serialize_value(x, depth+1) for x in v[:20]]
+        return {"type": kind, "repr": repr(v)[:80], "items": items, "len": len(v)}
+    elif isinstance(v, dict):
+        pairs = []
+        for k, val in list(v.items())[:20]:
+            pairs.append({"key": serialize_value(k, depth+1), "val": serialize_value(val, depth+1)})
+        return {"type": "dict", "repr": repr(v)[:80], "pairs": pairs, "len": len(v)}
+    elif isinstance(v, set):
+        items = [serialize_value(x, depth+1) for x in list(v)[:20]]
+        return {"type": "set", "repr": repr(v)[:80], "items": items, "len": len(v)}
+    elif isinstance(v, types.FunctionType):
+        return {"type": "function", "repr": f"<function {v.__name__}>"}
+    else:
+        return {"type": t, "repr": repr(v)[:80]}
 
-            steps.append({
-                'line': line_no - 1,  # 转为 0-based
-                'vars': local_vars,
-                'output': output_buffer.getvalue()
-            })
-    return trace_calls
+def capture_frame(frame):
+    local_vars = {}
+    for k, v in frame.f_locals.items():
+        if k.startswith('__'):
+            continue
+        try:
+            local_vars[k] = serialize_value(v)
+        except:
+            local_vars[k] = {"type": "error", "repr": "<error>"}
+    return {
+        "func": frame.f_code.co_name,
+        "line": frame.f_lineno,
+        "locals": local_vars
+    }
+
+MAX_STEPS = 500  # 防止步骤过多导致卡死
+
+def trace_calls(frame, event, arg):
+    # 只追踪用户代码，遇到非用户帧立即返回 None 阻止继续追踪
+    if frame.f_code.co_filename != '<user>':
+        return None
+
+    if len(steps) >= MAX_STEPS:
+        return None
+
+    if event in ('line', 'call', 'return', 'exception'):
+        # 收集完整调用栈（只保留用户帧）
+        stack = []
+        f = frame
+        while f and f.f_code.co_filename == '<user>':
+            stack.insert(0, capture_frame(f))
+            f = f.f_back
+
+        steps.append({
+            'line': frame.f_lineno,   # 1-based
+            'event': event,
+            'stack': stack,
+            'stdout': output_buffer.getvalue()
+        })
+
+    return trace_calls  # 继续追踪该帧的后续事件
 
 try:
     sys.settrace(trace_calls)
-    exec(compile(source, '<user>', 'exec'), {})
+    # ★ 关键修复：传入 __name__ = '__main__'，否则 if __name__ == "__main__" 块不会执行
+    exec_globals = {'__name__': '__main__'}
+    exec(compile(source, '<user>', 'exec'), exec_globals)
     sys.settrace(None)
     sys.stdout = old_stdout
-    result = {'steps': steps, 'error': None}
+    truncated = len(steps) >= MAX_STEPS
+    result = {'steps': steps, 'error': None, 'lines': source.splitlines(), 'truncated': truncated}
 except Exception as e:
     sys.settrace(None)
     sys.stdout = old_stdout
-    result = {'steps': steps, 'error': str(e)}
+    result = {'steps': steps, 'error': str(e), 'lines': source.splitlines(), 'truncated': False}
 
 json.dumps(result)
 `);

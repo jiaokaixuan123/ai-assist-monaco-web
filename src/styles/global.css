@@ -249,3 +249,15 @@ input[type="checkbox"] {
 .session-list::-webkit-scrollbar-track  { background: transparent; }
 .session-list::-webkit-scrollbar-thumb  { background: #444; border-radius: 2px; }
 .session-list::-webkit-scrollbar-thumb:hover { background: #666; }
+
+
+/* TracePlayer - Monaco 行高亮 */
+.trace-highlight-line {
+  background: rgba(241, 196, 15, 0.15) !important;
+  border-left: 3px solid #f1c40f !important;
+}
+.trace-highlight-glyph::before {
+  content: '▶';
+  color: #f1c40f;
+  font-size: 12px;
+}
