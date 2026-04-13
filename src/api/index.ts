@@ -113,6 +113,19 @@ export const bookApi = {
 export const knowledgeApi = {
   search: (query: string, top_k = 3) =>
     api.post('/api/knowledge/search', { query, top_k }),
-  ask: (question: string, api_key: string) =>
-    api.post('/api/knowledge/ask', { question, api_key }),
+  ask: (question: string) =>
+    api.post('/api/knowledge/ask', { question }),
+}
+
+// ── AI（后端代理模式）───────────────────────────
+export const aiApi = {
+  /** 非流式对话 */
+  chat: (messages: any[], opts?: { temperature?: number; max_tokens?: number; model?: string }) =>
+    api.post('/api/ai/chat', { messages, ...opts }),
+
+  /** 获取 SSE 流式对话的 URL 和 payload（前端自行 fetch） */
+  getStreamUrl: () => '/api/ai/stream',
+
+  /** AI 状态查询（是否已配置等） */
+  status: () => api.get('/api/ai/status'),
 }

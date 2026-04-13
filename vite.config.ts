@@ -17,12 +17,22 @@ export default defineConfig({
     exclude: ['pyodide'],
   },
   server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+    },
+    // 注意：COOP/COEP 头已移除。
+    // 这两个头仅 Pyodide 的 SharedArrayBuffer 需要，
+    // 但它们会强制浏览器跨域隔离，导致首屏加载增加 10~30 秒。
+    // 如需启用 Pyodide 高级功能，取消下方注释：
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
       'Cross-Origin-Embedder-Policy': 'require-corp',
     },
     fs: {
-      allow: ['public', 'E:/Code/python/demo/monaco-ai-assist-web', '.'], // Allow serving files from the 'public' directory
+      allow: ['public', 'E:/Code/python/demo/monaco-ai-assist-web', '.'],
     },
   },
   build: {

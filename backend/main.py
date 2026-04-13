@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from pathlib import Path
 from core.database import connect_db, close_db
-from routers import auth, courses, exercises, progress, admin, judge, knowledge, books
+from routers import auth, courses, exercises, progress, admin, judge, knowledge, books, ai
 
 
 @asynccontextmanager
@@ -32,6 +32,7 @@ app.include_router(admin.router)
 app.include_router(judge.router)
 app.include_router(knowledge.router)
 app.include_router(books.router)
+app.include_router(ai.router)
 
 # 静态文件服务（书籍文件下载/预览）
 uploads_dir = Path(__file__).parent / "uploads"

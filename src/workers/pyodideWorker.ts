@@ -20,13 +20,9 @@ async function initPyodide() {
     pyodideReadyPromise = mod.loadPyodide({ indexURL: '/pyodide/', fullStdLib: false });
     const pyodide = await pyodideReadyPromise;
 
-    // 预加载常用包
-    try {
-      await pyodide.loadPackage(['numpy', 'pandas', 'matplotlib', 'micropip']);
-      console.log('✅ [worker] 常用包已加载');
-    } catch (e) {
-      console.warn('⚠️ [worker] 部分包加载失败:', e);
-    }
+    // 注意：不再在初始化时预加载 numpy/pandas/matplotlib 等重量级包
+    // 这些包总计 40MB+，会严重拖慢 Worker 就绪时间
+    // 改为按需加载（用户触发对应功能时才下载）
 
     // 标记就绪，通知主线程
     pyodideReadyFlag = true;

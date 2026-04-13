@@ -105,14 +105,20 @@ async def search_knowledge(req: SearchRequest):
 
 
 class AskRequest(BaseModel):
+    """RAG 问答请求（不再包含 api_key，密钥由后端 .env 统一管理）"""
     question: str
-    api_key: str
-    model_name: str = "gpt-3.5-turbo"
 
 
 @router.post("/ask")
 async def ask_with_context(req: AskRequest):
-    """RAG 问答：检索相关片段 → 构建 prompt → 调用大模型"""
+    """RAG 问答：检索相关片段 → 构建 prompt → 通过 AI 模块调用大模型"""
+    from ai import is_ai_available, get_provider, ChatOptions, ChatMessage
+
+    if not is_ai_available():
+        raise HTTPException(
+            503, "AI 服务未配置，请在 backend/.env 中设置 AI_API_KEY"
+        )
+
     model = get_model()
     collection = get_collection()
 
@@ -147,18 +153,14 @@ async def ask_with_context(req: AskRequest):
 【学生问题】
 {req.question}"""
 
-    # 4. 调用大模型
+    # 4. 通过统一 AI 模块调用大模型（不再使用 openai 库 + 前端传 key）
     try:
-        from openai import OpenAI
-        client = OpenAI(api_key=req.api_key)
-        response = client.chat.completions.create(
-            model=req.model_name,
-            messages=[{"role": "user", "content": prompt}],
+        provider = get_provider()
+        response = await provider.chat(ChatOptions(
+            messages=[ChatMessage(role="user", content=prompt)],
             temperature=0.4,
-        )
-        answer = response.choices[0].message.content
-    except ImportError:
-        raise HTTPException(500, "OpenAI 库未安装，请运行: pip install openai")
+        ))
+        answer = response.content
     except Exception as e:
         raise HTTPException(500, f"调用模型失败: {str(e)}")
 

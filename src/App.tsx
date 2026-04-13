@@ -1,17 +1,34 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
-import HomePage from './pages/HomePage'
-import LoginPage from './pages/LoginPage'
-import RegisterPage from './pages/RegisterPage'
-import CoursesPage from './pages/CoursesPage'
-import CourseDetailPage from './pages/CourseDetailPage'
-import LearnPage from './pages/LearnPage'
-import ExercisesPage from './pages/ExercisesPage'
-import ExerciseDetailPage from './pages/ExerciseDetailPage'
-import EditorPage from './pages/EditorPage'
-import AdminPage from './pages/AdminPage'
-import BooksPage from './pages/BooksPage'
-import AiTutor from './components/AiTutor/AiTutor'
+
+// ── 页面懒加载（首屏只加载 HomePage，其余按需）─────────
+const HomePage          = lazy(() => import('./pages/HomePage'))
+const LoginPage         = lazy(() => import('./pages/LoginPage'))
+const RegisterPage      = lazy(() => import('./pages/RegisterPage'))
+const CoursesPage       = lazy(() => import('./pages/CoursesPage'))
+const CourseDetailPage  = lazy(() => import('./pages/CourseDetailPage'))
+const LearnPage         = lazy(() => import('./pages/LearnPage'))
+const ExercisesPage     = lazy(() => import('./pages/ExercisesPage'))
+const ExerciseDetailPage = lazy(() => import('./pages/ExerciseDetailPage'))
+const EditorPage        = lazy(() => import('./pages/EditorPage'))
+const AdminPage         = lazy(() => import('./pages/AdminPage'))
+const BooksPage         = lazy(() => import('./pages/BooksPage'))
+
+// AiTutor 含 react-markdown / highlight.js 等重量依赖，必须懒加载
+const AiTutor = lazy(() => import('./components/AiTutor/AiTutor'))
+
+/** 路由级 loading 占位 */
+function PageFallback() {
+  return (
+    <div style={{
+      display: 'flex', justifyContent: 'center', alignItems: 'center',
+      height: '60vh', fontSize: '14px', color: '#999',
+    }}>
+      加载中...
+    </div>
+  )
+}
 
 function TeacherRoute({ children }: { children: JSX.Element }) {
   const { user, loading, isTeacher } = useAuth()
@@ -23,7 +40,7 @@ function TeacherRoute({ children }: { children: JSX.Element }) {
 
 export default function App() {
   return (
-    <>
+    <Suspense fallback={<PageFallback />}>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -39,6 +56,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <AiTutor />
-    </>
+    </Suspense>
   )
 }

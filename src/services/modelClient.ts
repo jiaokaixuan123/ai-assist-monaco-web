@@ -1,6 +1,20 @@
+/**
+ * AI 客户端（后端代理模式）
+ *
+ * 安全设计：
+ * - 前端不持有任何 API Key
+ * - 所有请求经后端 /api/ai/* 代理转发至实际模型服务
+ * - 后端从 .env 读取密钥，Key 始终不出服务器
+ *
+ * 接口兼容性：
+ * - chat()     → POST /api/ai/chat      （非流式）
+ * - streamChat → POST /api/ai/stream    （SSE 流式）
+ */
+
 import axios from 'axios'
 
-// 大模型接口
+// ── 类型定义 ──
+
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant'
   content: string
@@ -18,155 +32,112 @@ interface ChatResponse {
   model: string
 }
 
+const AI_BASE = '/api/ai'
+
+// ── 实现 ──
+
 class ModelClient {
-  private apiKey: string
-  private apiUrl: string
-  private defaultModel: string
-  private provider: string
-
   constructor() {
-    // provider 检测：根据专用 key 猜测
-    this.provider = import.meta.env.VITE_AI_API_KEY || ''
-
-    // 模型配置
-    this.apiKey = import.meta.env.VITE_AI_API_KEY || ''
-    this.apiUrl = import.meta.env.VITE_AI_API_URL || ''
-    this.defaultModel = import.meta.env.VITE_AI_MODEL || ''
-    
-    // 日志
-    console.log('[ModelClient] init:', {
-      provider: this.provider,
-      apiUrl: this.apiUrl,
-      defaultModel: this.defaultModel,
-      hasKey: !!this.apiKey,
-      keyPrefix: this.apiKey ? this.apiKey.slice(0, 10) + '...' : 'NONE'
-    })
+    // 不再读取任何 API Key
+    console.log('[ModelClient] 初始化（后端代理模式）')
   }
 
-  // 普通聊天请求：chat方法
+  /**
+   * 非流式聊天 — 经后端代理转发
+   */
   async chat(options: ChatOptions): Promise<ChatResponse> {
-    // 参数结构 + 默认值
-    const { 
-      messages, 
-      temperature = 0.7,            // 创造性
-      maxTokens = 1000,             // 最大回复长度
-      model = this.defaultModel 
-    } = options
+    const { messages, temperature = 0.7, maxTokens = 1000 } = options
 
-    // 无API Key时返回模拟响应
-    if (!this.apiKey) {
-      console.warn('[ModelClient] apiKey missing, returning mock response. 请检查 .env.local 是否包含 VITE_AI_API_KEY ')
-      return this.getMockResponse(messages)
-    }
+    console.log('[ModelClient] chat request (proxy)', {
+      messagesCount: messages.length,
+    })
 
-    // 日志
-    console.log('[ModelClient] chat request:', { provider: this.provider, model, temperature, maxTokens, messagesCount: messages.length })
-
-    // 发送请求
     try {
-      // 构建请求体，调用Axios POST请求
-      const payload: any = {
-        model,
+      const { data } = await axios.post(`${AI_BASE}/chat`, {
         messages,
         temperature,
         max_tokens: maxTokens,
-      }
-      const response = await axios.post(
-        this.apiUrl,
-        payload,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.apiKey}`,
-          },
-          timeout: 30000,
-        }
-      )
+      }, { timeout: 30000 })
 
-      // 解析响应结果，返回统一格式
-      const data = response.data                                // 完整响应体
-      const choice = data?.choices?.[0]                         // 回复选项数组（支持一次返回多个回复）
-      const content = choice?.message?.content || ''            // 具体文本内容
-      const usedModel = data?.model || choice?.model || model
-
-      console.log('[ModelClient] chat response OK:', { provider: this.provider, usedModel, contentPreview: content.slice(0, 40) })
-      return { content, model: usedModel }
+      return { content: data.content, model: data.model }
     } catch (error: any) {
       const status = error?.response?.status
-      const respData = error?.response?.data
-      console.error('[ModelClient] chat error:', status, respData || error)
+      if (status === 503) {
+        console.warn('[ModelClient] AI 服务未配置，返回模拟响应')
+        return this.getMockResponse(messages)
+      }
       if (status === 401 || status === 403) {
-        throw new Error(`鉴权失败(${status})：请确认 API Key 正确，并重启开发服务器。当前 provider=${this.provider}`)
+        throw new Error(`鉴权失败(${status})，请联系管理员检查后端 AI 配置`)
       }
       throw new Error(`AI 服务错误: ${error.message}`)
     }
   }
 
-  // 流式输出
-  async streamChat(options: ChatOptions, onDelta: (text: string) => void): Promise<ChatResponse> {
-    const { messages, temperature = 0.7, maxTokens = 1000, model = this.defaultModel } = options
+  /**
+   * SSE 流式聊天 — 后端透传 SSE 流至前端
+   *
+   * 数据流：
+   *   前端 fetch → 后端 /api/ai/stream → 大模型 SSE → 后端逐行 yield → 前端 onDelta 回调
+   */
+  async streamChat(
+    options: ChatOptions,
+    onDelta: (text: string) => void,
+  ): Promise<ChatResponse> {
+    const { messages, temperature = 0.5, maxTokens = 800 } = options
 
-    if (!this.apiKey) {
-      console.warn('[ModelClient] 无 apiKey，流式模式回退为模拟响应')
-      const mock = this.getMockResponse(messages)
-      onDelta(mock.content)
-      return mock
-    }
+    console.log('[ModelClient] stream request (proxy)', { messagesCount: messages.length })
 
-    // 构建请求体
-    const payload: any = {
-      model,
-      messages,
-      temperature,
-      max_tokens: maxTokens,
-      stream: true
-    }
-
-    console.log('[ModelClient] 开始流式请求:', { provider: this.provider, model })
-
-    // 发起Fetch请求（Axios对Stream支持不佳，改用原生Fetch）
-    const response = await fetch(this.apiUrl, {
+    const response = await fetch(`${AI_BASE}/stream`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.apiKey}`
-      },
-      body: JSON.stringify(payload)
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages, temperature, max_tokens: maxTokens }),
     })
 
+    // 服务未配置时回退到模拟响应
     if (!response.ok || !response.body) {
-      console.error('[ModelClient] 流式连接失败', response.status, response.statusText)
+      if (response.status === 503) {
+        console.warn('[ModelClient] AI 未配置，流式模拟')
+        const mock = this.getMockResponse(messages)
+        onDelta(mock.content)
+        return mock
+      }
       throw new Error(`流式请求失败: ${response.status}`)
     }
 
-    // 读取流
-    const reader = response.body.getReader()  // 获取流读取器
-    const decoder = new TextDecoder('utf-8')  // 二进制转字符串
-    let full = ''                             // 累积完整回复
+    // 读取后端转发的 SSE 流
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder('utf-8')
+    let full = ''
 
-    // 解码并解析SSE格式数据（AI流式返回的标准格式）
     try {
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
-        const chunk = decoder.decode(value, { stream: true }) // 解码当前块
-        // DeepSeek SSE 格式: 多行 data: {json}\n
-        const lines = chunk.split(/\r?\n/).filter(l => l.startsWith('data:')) // 只处理 data: 开头的行
+
+        const chunk = decoder.decode(value, { stream: true })
+        // 解析 SSE 行格式: data: "文本"\n\n
+        const lines = chunk.split(/\r?\n/).filter(l => l.startsWith('data: '))
+
         for (const line of lines) {
-          const dataStr = line.replace(/^data:\s*/, '').trim()  // 提取 data 内容
-          if (dataStr === '[DONE]') { // 流结束标志
-            console.log('[ModelClient] 流结束')
-            break
+          const raw = line.slice(6).trim()
+
+          if (raw === '[DONE]') break
+
+          // 检查是否为错误标记
+          if (raw.startsWith('[ERROR]')) {
+            throw new Error(raw.slice(7))
           }
+
           try {
-            const json = JSON.parse(dataStr)  // 解析 JSON
-            const delta = json?.choices?.[0]?.delta?.content || ''  // 提取增量内容
-            if (delta) {  // 有增量则回调
-              full += delta // 累积完整内容
-              onDelta(delta)  // 回调
+            // 后端发送的 data 内容是 JSON 字符串化的纯文本 delta
+            const delta = JSON.parse(raw)
+            if (typeof delta === 'string' && delta) {
+              full += delta
+              onDelta(delta)
             }
-          } catch (e) {
-            // 忽略无法解析的行
+          } catch {
+            // 兼容：如果解析失败且非特殊标记，当作纯文本处理
+            if (raw) { full += raw; onDelta(raw) }
           }
         }
       }
@@ -175,31 +146,32 @@ class ModelClient {
       throw new Error('流式读取失败: ' + e.message)
     }
 
-    return { content: full, model }
+    return { content: full, model: 'via-backend-proxy' }
   }
 
-  // 模拟响应
+  // ── Mock 响应 ──
+
   private getMockResponse(messages: ChatMessage[]): ChatResponse {
-    const lastMessage = messages[messages.length - 1].content.toLowerCase()
+    const lastMsg = messages[messages.length - 1]?.content?.toLowerCase() || ''
 
-    let response = '这是一个模拟响应。请配置 VITE_AI_API_KEY 环境变量以使用真实的 AI 服务。'
+    let text =
+      '后端 AI 服务尚未配置。请在服务器 backend/.env 中设置 AI_API_KEY 以启用真实 AI 功能。'
 
-    if (lastMessage.includes('解释')) {
-      response = '这段代码定义了一个函数，用于处理特定逻辑。可进一步加入类型注解与异常处理。'
-    } else if (lastMessage.includes('优化')) {
-      response = '优化建议：\n1. 减少重复计算\n2. 拆分函数提升可读性\n3. 增加错误处理和边界条件判断'
+    if (lastMsg.includes('解释')) {
+      text = '这段代码定义了一个函数，用于处理特定逻辑。启用 AI 后可获得更详细的分析。'
+    } else if (lastMsg.includes('优化')) {
+      text = '优化建议：\n1. 减少重复计算\n2. 拆分大函数提升可读性\n3. 增加错误处理和边界条件判断'
     }
 
-    return { content: response, model: this.provider === 'deepseek' ? 'deepseek-mock' : 'mock-model' }
+    return { content: text, model: 'mock-backend' }
   }
 }
 
-let modelClient: ModelClient | null = null
+// ── 单例导出 ──
 
-// 获取ModelClient实例
+let instance: ModelClient | null = null
+
 export function getModelClient(): ModelClient {
-  if (!modelClient) {
-    modelClient = new ModelClient()
-  }
-  return modelClient
+  if (!instance) instance = new ModelClient()
+  return instance
 }
