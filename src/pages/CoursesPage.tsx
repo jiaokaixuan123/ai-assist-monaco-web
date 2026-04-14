@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { courseApi, progressApi } from '../api'
-import { useAuth } from '../contexts/AuthContext'
+import { useNavigate } from 'react-router-dom'
+import { courseApi } from '../api'
 import NavBar from '../components/learn/NavBar'
 import styles from './CoursesPage.module.css'
 
@@ -18,16 +17,13 @@ const DIFF_LABEL: Record<string, string> = { beginner: '入门', intermediate: '
 const DIFF_COLOR: Record<string, string> = { beginner: '#3fb950', intermediate: '#d29922', advanced: '#f85149' }
 
 export default function CoursesPage() {
-  const { user } = useAuth()
   const navigate = useNavigate()
   const [courses, setCourses] = useState<Course[]>([])
-  const [completedLessons, setCompletedLessons] = useState<string[]>([])
   const [filter, setFilter] = useState('all')
 
   useEffect(() => {
     courseApi.list().then(r => setCourses(r.data))
-    if (user) progressApi.me().then(r => setCompletedLessons(r.data.completed_lessons ?? [])).catch(() => {})
-  }, [user])
+  }, [])
 
   const filtered = filter === 'all' ? courses : courses.filter(c => c.difficulty === filter)
 

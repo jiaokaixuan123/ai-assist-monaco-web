@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import NavBar from '../components/learn/NavBar'
 import styles from './BooksPage.module.css'
-import { bookApi } from '../api'
+import { bookApi, resolveBackendUrl } from '../api'
 
 interface Book {
   id: string
@@ -76,7 +76,7 @@ export default function BooksPage() {
               <div className={styles.actions}>
                 {b.file_path ? (
                   <a
-                    href={`http://localhost:8000${b.file_path}`}
+                    href={resolveBackendUrl(b.file_path)}
                     target="_blank"
                     rel="noreferrer"
                     className={styles.previewBtn}

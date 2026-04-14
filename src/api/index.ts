@@ -1,8 +1,23 @@
 import axios from 'axios'
 
-const BASE = 'http://localhost:8000'
+const normalizeBaseUrl = (value?: string) => {
+  const trimmed = (value ?? '').trim()
+  if (!trimmed) return ''
+  return trimmed.replace(/\/+$/, '')
+}
 
-export const api = axios.create({ baseURL: BASE })
+const API_BASE = normalizeBaseUrl(import.meta.env.VITE_API_BASE_URL)
+  || (import.meta.env.DEV ? 'http://localhost:8000' : '')
+const FILE_BASE = normalizeBaseUrl(import.meta.env.VITE_FILE_BASE_URL) || API_BASE
+
+export const api = axios.create({ baseURL: API_BASE })
+
+export const resolveBackendUrl = (path?: string | null) => {
+  if (!path) return ''
+  if (/^https?:\/\//i.test(path)) return path
+  if (!FILE_BASE) return path
+  return `${FILE_BASE}${path.startsWith('/') ? path : `/${path}`}`
+}
 
 // 每次请求自动带 token
 api.interceptors.request.use((config) => {

@@ -10,12 +10,6 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
-    # ── AI 服务配置 ──
-    AI_PROVIDER: str = "glm4"                    # glm4 | openai_compat
-    AI_API_KEY: str = ""                          # 留空则 AI 功能不可用
-    AI_API_URL: str = ""
-    AI_MODEL: str = "glm-4-flash"
-
     class Config:
         env_file = ".env"
 

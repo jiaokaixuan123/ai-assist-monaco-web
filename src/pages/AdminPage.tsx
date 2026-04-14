@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { adminApi, courseApi, exerciseApi, bookApi } from '../api'
+import { adminApi, courseApi, exerciseApi, bookApi, resolveBackendUrl } from '../api'
 import { useAuth } from '../contexts/AuthContext'
 import NavBar from '../components/learn/NavBar'
 import styles from './AdminPage.module.css'
@@ -630,7 +630,7 @@ export default function AdminPage() {
                       </td>
                       <td className={styles.actions}>
                         {b.file_path && (
-                          <a href={`http://localhost:8000${b.file_path}`} target="_blank" rel="noreferrer"
+                          <a href={resolveBackendUrl(b.file_path)} target="_blank" rel="noreferrer"
                             className={styles.btnEdit}>预览</a>
                         )}
                         {b.file_path && !b.indexed && (

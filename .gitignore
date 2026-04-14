@@ -112,3 +112,6 @@ public/react-devtools-check.html
 # *.md
 # 但建议保留 README.md
 !README.md
+
+release/
+
