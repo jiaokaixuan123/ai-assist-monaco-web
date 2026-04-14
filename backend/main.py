@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from core.database import close_db, connect_db, settings
-from routers import admin, auth, books, courses, exercises, judge, knowledge, progress
+from routers import admin, auth, books, courses, exercises, judge, knowledge, progress, ai
 
 
 class SPAStaticFiles(StaticFiles):

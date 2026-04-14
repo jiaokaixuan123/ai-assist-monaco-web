@@ -10,6 +10,12 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
+    # ── AI 配置（供 ai/provider_registry.py 使用）─────────
+    AI_PROVIDER: str = "glm4"                    # glm4 / openai_compat
+    AI_MODEL: str = ""                           # 空=使用 provider 默认模型
+    AI_API_KEY: str = ""                         # API 密钥（留空则 AI 功能不可用）
+    AI_API_URL: str = ""                         # 自定义 API 地址（空则用 provider 默认值）
+
     class Config:
         env_file = ".env"
 
