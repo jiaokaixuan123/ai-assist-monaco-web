@@ -31,6 +31,7 @@ After extraction, key files:
 - `backend\` (backend code + uploads + chroma_db + frontend_dist)
 - `install-backend-deps.bat`
 - `start-server.bat`
+- `start-lsp-server.bat`
 - `restore-mongo.bat` (only used when `mongo_dump` exists)
 - `.env.backend.example`
 
@@ -108,6 +109,24 @@ set HOST=0.0.0.0
 set PORT=8080
 start-server.bat
 ```
+
+## 6.1) Start LSP service (optional, for editor intelligence)
+
+If you use Monaco editor features like completion/hover/diagnostics, start LSP server too:
+
+```bat
+start-lsp-server.bat
+```
+
+Default port is `3001` and frontend will auto-connect to `ws://<current-host>:3001`.
+Override port if needed:
+
+```bat
+set PYRIGHT_WS_PORT=3001
+start-lsp-server.bat
+```
+
+If clients access from other machines, allow inbound TCP `3001` on Windows Firewall.
 
 ## 7) Verify
 

@@ -104,7 +104,16 @@ export function syncModelChange(model: monaco.editor.ITextModel) {
 let retryCount = 0
 const MAX_RETRIES = 8
 
-export function connectPyright(url = 'ws://localhost:3001') {
+function getDefaultLspUrl(): string {
+  const configured = import.meta.env.VITE_LSP_WS_URL?.trim()
+  if (configured) return configured
+  if (typeof window === 'undefined') return 'ws://localhost:3001'
+  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
+  const host = window.location.hostname || 'localhost'
+  return `${protocol}://${host}:3001`
+}
+
+export function connectPyright(url = getDefaultLspUrl()) {
   if (socket && socket.readyState !== WebSocket.CLOSED) return
   socket = new WebSocket(url)
   let initRequestId: number | null = null

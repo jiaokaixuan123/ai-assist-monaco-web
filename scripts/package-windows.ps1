@@ -63,6 +63,7 @@ Invoke-Robocopy -Source $FrontendDistSource -Destination $FrontendDistTarget -Ex
 Write-Host "[4/6] Copying deployment scripts and templates..."
 Copy-Item -LiteralPath (Join-Path $RepoRoot "deploy\windows\install-backend-deps.bat") -Destination (Join-Path $StageDir "install-backend-deps.bat") -Force
 Copy-Item -LiteralPath (Join-Path $RepoRoot "deploy\windows\start-server.bat") -Destination (Join-Path $StageDir "start-server.bat") -Force
+Copy-Item -LiteralPath (Join-Path $RepoRoot "deploy\windows\start-lsp-server.bat") -Destination (Join-Path $StageDir "start-lsp-server.bat") -Force
 Copy-Item -LiteralPath (Join-Path $RepoRoot "deploy\windows\restore-mongo.bat") -Destination (Join-Path $StageDir "restore-mongo.bat") -Force
 Copy-Item -LiteralPath (Join-Path $RepoRoot "deploy\windows\.env.backend.example") -Destination (Join-Path $StageDir ".env.backend.example") -Force
 Copy-Item -LiteralPath (Join-Path $RepoRoot "deploy\windows\.env.frontend.production.example") -Destination (Join-Path $StageDir ".env.frontend.production.example") -Force

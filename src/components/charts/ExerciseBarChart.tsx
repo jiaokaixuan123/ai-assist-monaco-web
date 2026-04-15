@@ -5,7 +5,6 @@
  * 帮助识别不同难度下的表现差异。
  */
 
-import React from 'react'
 import {
   BarChart,
   Bar,

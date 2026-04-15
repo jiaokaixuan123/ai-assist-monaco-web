@@ -5,7 +5,7 @@
  * 直观呈现用户代码能力的"形状"。
  */
 
-import React from 'react'
+
 import {
   RadarChart,
   PolarGrid,

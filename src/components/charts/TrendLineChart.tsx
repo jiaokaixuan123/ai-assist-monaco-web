@@ -5,7 +5,6 @@
  * 支持多条折线叠加显示。
  */
 
-import React from 'react'
 import {
   LineChart,
   Line,
